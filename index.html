@@ -271,6 +271,9 @@
 <div class="panel" id="panel-stays">
   <div class="sec-hdr"><h2>🏨 All Accommodations</h2></div>
   <div id="staysList"></div>
+  <div class="add-btn" onclick="openAddStayModal()" style="margin-top:4px;margin-bottom:8px">
+    <span class="add-ico">+</span> Add Stay
+  </div>
 </div>
 
 <!-- INFO -->
@@ -314,6 +317,50 @@
   <div style="margin-top:4px;margin-bottom:10px;">
     <div class="sec-lbl">Notes</div>
     <textarea class="notes-ta" placeholder="Jot down anything for the trip…"></textarea>
+  </div>
+</div>
+
+<!-- ADD STAY MODAL -->
+<div class="modal-overlay" id="stayModalOverlay" style="display:none" onclick="closeStayModal()"></div>
+<div class="modal-sheet" id="stayModalSheet">
+  <div class="modal-handle"></div>
+  <div class="modal-title">Add Stay</div>
+  <div class="form-group">
+    <label>Property Name *</label>
+    <input type="text" class="form-input" id="sInputName" placeholder="e.g. Hotel de la Paix">
+  </div>
+  <div class="form-group">
+    <label>Type</label>
+    <select class="form-select" id="sInputType">
+      <option value="hotel">🏨 Hotel</option>
+      <option value="airbnb">🏡 Airbnb / Vacation Rental</option>
+      <option value="private">🏠 Private / Friend's Place</option>
+      <option value="hostel">🛏️ Hostel</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label>City &amp; Country</label>
+    <input type="text" class="form-input" id="sInputCity" placeholder="e.g. Florence, Italy">
+  </div>
+  <div class="form-group">
+    <label>Check-in Date</label>
+    <input type="text" class="form-input" id="sInputIn" placeholder="e.g. 20 Jul">
+  </div>
+  <div class="form-group">
+    <label>Check-out Date</label>
+    <input type="text" class="form-input" id="sInputOut" placeholder="e.g. 23 Jul">
+  </div>
+  <div class="form-group">
+    <label>Address (optional)</label>
+    <input type="text" class="form-input" id="sInputAddr" placeholder="Opens in Google Maps">
+  </div>
+  <div class="form-group">
+    <label>Notes (optional)</label>
+    <textarea class="form-textarea" id="sInputNotes" placeholder="Booking ref, host name, wifi, etc."></textarea>
+  </div>
+  <div class="modal-btn-row">
+    <button class="modal-btn cancel" onclick="closeStayModal()">Cancel</button>
+    <button class="modal-btn save" onclick="saveStay()">Add Stay</button>
   </div>
 </div>
 
@@ -770,23 +817,30 @@ function renderFlights() {
 /* ══ STAYS LIST ══════════════════════════════ */
 function renderStaysList() {
   const el = document.getElementById('staysList');
-  stays.forEach(s => {
+  el.innerHTML = '';
+
+  function buildStayCard(s, customIdx) {
     const div = document.createElement('div');
     div.className = 'stay-list-item';
     const rows = [
       s.host ? ['Host', s.host] : null,
       s.room ? ['Room', s.room] : null,
       ['Guests', s.guests],
-      ['Address', s.address],
+      s.address ? ['Address', s.address] : null,
       ['Check-in', s.checkIn],
       ['Check-out', s.checkOut],
       s.notes ? ['Notes', s.notes] : null,
     ].filter(Boolean);
+    const delBtn = customIdx !== undefined
+      ? `<span class="del-x" onclick="deleteStay(${customIdx},event)" style="margin-left:auto;font-size:13px">✕</span>` : '';
+    const nightsStr = typeof s.nights === 'number'
+      ? `${s.nights} night${s.nights>1?'s':''}` : '';
     div.innerHTML = `
       <div class="sli-hdr">
         <span style="font-size:18px">${s.flag}</span>
         <span class="sli-ico">${s.icon}</span>
-        <div><div class="sli-title">${s.title}</div><div class="sli-dates">${s.city} · ${s.dates} · ${s.nights} night${s.nights>1?'s':''}</div></div>
+        <div style="flex:1;min-width:0"><div class="sli-title">${s.title}</div><div class="sli-dates">${s.city} · ${s.dates}${nightsStr?' · '+nightsStr:''}</div></div>
+        ${delBtn}
       </div>
       ${rows.map(([l,v]) => {
         if (l === 'Address') {
@@ -796,8 +850,11 @@ function renderStaysList() {
         }
         return `<div class="sli-row"><span class="sli-lbl">${l}</span><span class="sli-val">${v}</span></div>`;
       }).join('')}`;
-    el.appendChild(div);
-  });
+    return div;
+  }
+
+  stays.forEach(s => el.appendChild(buildStayCard(s, undefined)));
+  customStays.forEach((s, i) => el.appendChild(buildStayCard(s, i)));
 }
 
 /* ══ PANEL SWITCH ════════════════════════════ */
@@ -853,6 +910,64 @@ try { customActivities = JSON.parse(localStorage.getItem('chelsea_trip_activitie
 
 function saveToStorage() {
   try { localStorage.setItem('chelsea_trip_activities', JSON.stringify(customActivities)); } catch(e) {}
+}
+
+/* ══ CUSTOM STAYS (localStorage) ════════════════ */
+let customStays = [];
+try { customStays = JSON.parse(localStorage.getItem('chelsea_trip_stays') || '[]'); } catch(e) {}
+
+function saveStaysToStorage() {
+  try { localStorage.setItem('chelsea_trip_stays', JSON.stringify(customStays)); } catch(e) {}
+}
+
+function openAddStayModal() {
+  document.getElementById('sInputName').value  = '';
+  document.getElementById('sInputType').value  = 'hotel';
+  document.getElementById('sInputCity').value  = '';
+  document.getElementById('sInputIn').value    = '';
+  document.getElementById('sInputOut').value   = '';
+  document.getElementById('sInputAddr').value  = '';
+  document.getElementById('sInputNotes').value = '';
+  document.getElementById('stayModalOverlay').style.display = 'block';
+  document.getElementById('stayModalSheet').classList.add('open');
+}
+
+function closeStayModal() {
+  document.getElementById('stayModalOverlay').style.display = 'none';
+  document.getElementById('stayModalSheet').classList.remove('open');
+}
+
+function saveStay() {
+  const name = document.getElementById('sInputName').value.trim();
+  if (!name) { document.getElementById('sInputName').focus(); return; }
+  const typeVal = document.getElementById('sInputType').value;
+  const iconMap = {hotel:'🏨', airbnb:'🏡', private:'🏠', hostel:'🛏️'};
+  const stay = {
+    icon: iconMap[typeVal] || '🏨',
+    flag: '📌',
+    title: name,
+    city: document.getElementById('sInputCity').value.trim() || 'Custom Stay',
+    dates: (document.getElementById('sInputIn').value.trim() || '?') + (document.getElementById('sInputOut').value.trim() ? '–' + document.getElementById('sInputOut').value.trim() : ''),
+    nights: '—',
+    type: typeVal.charAt(0).toUpperCase() + typeVal.slice(1),
+    guests: '—',
+    address: document.getElementById('sInputAddr').value.trim() || null,
+    checkIn: document.getElementById('sInputIn').value.trim() || null,
+    checkOut: document.getElementById('sInputOut').value.trim() || null,
+    notes: document.getElementById('sInputNotes').value.trim() || null,
+    _custom: true
+  };
+  customStays.push(stay);
+  saveStaysToStorage();
+  closeStayModal();
+  renderStaysList();
+}
+
+function deleteStay(idx, e) {
+  e.stopPropagation();
+  customStays.splice(idx, 1);
+  saveStaysToStorage();
+  renderStaysList();
 }
 
 /* ══ ADD MODAL ═══════════════════════════════ */
