@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chelsea's Europe Journey</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    :root {
+      --bg:#F4EFE6; --card:#FEFCF7; --gold:#8B6810; --gold-lt:#C9A23C;
+      --dark:#2A2116; --mid:#6A5C47; --muted:#A8987E; --border:#E5DDD0;
+      --green:#3E7459; --green-lt:#E6F2EC; --blue:#2A5F8E; --blue-lt:#E6EFF8;
+      --purple:#6B4A8C; --purp-lt:#F0EAF8; --warn:#B55A00; --warn-lt:#FDF0E4;
+    }
+    body { background:var(--bg); font-family:'Inter',system-ui,sans-serif; max-width:430px; margin:0 auto; min-height:100vh; overflow-x:hidden; }
+
+    /* HEADER */
+    .hdr { padding:52px 22px 10px; position:relative; }
+    .hdr-label { font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold); font-weight:600; margin-bottom:4px; }
+    .hdr-title { font-family:'Playfair Display',serif; font-size:30px; color:var(--dark); line-height:1.1; }
+    .hdr-title em { color:var(--gold); font-style:italic; }
+    .hdr-sub { font-size:11px; color:var(--muted); margin-top:3px; }
+    .hdr-gear { position:absolute; top:52px; right:18px; width:38px; height:38px; border-radius:50%; background:var(--card); border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:15px; box-shadow:0 2px 8px rgba(42,33,22,.08); cursor:pointer; }
+
+    /* DATE STRIP */
+    .strip-wrap { padding:4px 16px 0; }
+    .strip { display:flex; gap:7px; overflow-x:auto; padding:6px 2px 10px; scrollbar-width:none; }
+    .strip::-webkit-scrollbar { display:none; }
+    .dc { flex-shrink:0; width:58px; height:80px; border-radius:16px; background:var(--card); border:1.5px solid var(--border); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; position:relative; }
+    .dc.active { background:var(--dark); border-color:var(--dark); }
+    .dc .dnum  { font-size:8px; font-weight:700; letter-spacing:.8px; color:var(--gold); position:absolute; top:5px; right:6px; }
+    .dc.active .dnum { color:var(--gold-lt); }
+    .dc .wday  { font-size:8px; font-weight:600; letter-spacing:1px; color:var(--muted); text-transform:uppercase; }
+    .dc.active .wday { color:rgba(255,255,255,.55); }
+    .dc .mdate { font-size:23px; font-weight:600; color:var(--dark); line-height:1; margin:2px 0; }
+    .dc.active .mdate { color:#fff; }
+    .dc .mon   { font-size:8px; color:var(--muted); }
+    .dc.active .mon { color:rgba(255,255,255,.45); }
+    .dc.busy::after { content:'!'; position:absolute; bottom:5px; right:7px; width:12px; height:12px; border-radius:50%; background:var(--warn); color:#fff; font-size:8px; font-weight:700; text-align:center; line-height:12px; }
+
+    /* PROGRESS */
+    .prog-row { display:flex; align-items:center; padding:4px 20px 12px; gap:10px; }
+    .prog-bar { flex:1; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+    .prog-fill { height:100%; background:var(--gold); border-radius:2px; transition:width .35s ease; }
+    .prog-text { font-size:11px; color:var(--muted); font-weight:500; white-space:nowrap; }
+
+    /* PANELS */
+    .panel { display:none; padding:0 16px; margin-bottom:88px; }
+    .panel.on { display:block; }
+
+    /* LOC BANNER */
+    .loc-banner { display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--card); border:1.5px dashed var(--border); border-radius:14px; margin-bottom:10px; font-size:13px; color:var(--mid); }
+    .loc-banner .city { font-weight:600; color:var(--dark); }
+    .loc-banner .arr  { margin-left:auto; color:var(--muted); font-size:12px; }
+
+    /* STAY CARD */
+    .stay-card { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--card); border:1.5px solid var(--border); border-radius:14px; margin-bottom:10px; }
+    .stay-ico { font-size:20px; flex-shrink:0; }
+    .stay-body { flex:1; min-width:0; }
+    .stay-name { font-size:13px; font-weight:600; color:var(--dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .stay-sub  { font-size:10px; color:var(--muted); margin-top:1px; }
+    .stay-badges { display:flex; gap:5px; margin-top:5px; flex-wrap:wrap; }
+    .stay-badge { font-size:9px; font-weight:700; padding:2px 7px; border-radius:20px; letter-spacing:.4px; }
+    .sb-in  { background:var(--green-lt); color:var(--green); }
+    .sb-out { background:var(--warn-lt); color:var(--warn); }
+
+    /* ALERT */
+    .alert { display:flex; gap:10px; align-items:flex-start; padding:11px 14px; background:var(--warn-lt); border:1.5px solid #E5C098; border-radius:14px; margin-bottom:10px; }
+    .alert-ico { font-size:18px; flex-shrink:0; margin-top:1px; }
+    .alert-ttl { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--warn); margin-bottom:3px; }
+    .alert-txt { font-size:11px; color:#7A4500; line-height:1.5; }
+
+    /* SECTION HEADER */
+    .sec-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .sec-hdr h2 { font-size:13px; font-weight:600; color:var(--dark); display:flex; align-items:center; gap:6px; }
+
+    /* TIMELINE */
+    .tl { position:relative; }
+    .tl::before { content:''; position:absolute; left:50px; top:0; bottom:0; width:1.5px; background:var(--border); }
+    .tl-item { display:flex; margin-bottom:12px; position:relative; }
+    .tl-time { width:50px; flex-shrink:0; padding-top:14px; padding-right:10px; text-align:right; }
+    .tl-time .t { font-size:10px; font-weight:500; color:var(--mid); line-height:1.3; }
+    .tl-time .t small { display:block; font-size:8px; color:var(--muted); }
+    .tl-dot { width:18px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; padding-top:17px; z-index:1; }
+    .dot { width:11px; height:11px; border-radius:50%; background:var(--gold); border:2px solid var(--bg); box-shadow:0 0 0 2px var(--gold); }
+    .dot.travel   { background:var(--muted);   box-shadow:0 0 0 2px var(--muted);   }
+    .dot.flight   { background:var(--blue);    box-shadow:0 0 0 2px var(--blue);    }
+    .dot.event    { background:var(--purple);  box-shadow:0 0 0 2px var(--purple);  }
+    .dot.free     { background:var(--green);   box-shadow:0 0 0 2px var(--green);   }
+    .dot.checkin  { background:var(--green);   box-shadow:0 0 0 2px var(--green);   }
+    .dot.checkout { background:var(--muted);   box-shadow:0 0 0 2px var(--muted);   }
+    .dot.transfer { background:var(--warn);    box-shadow:0 0 0 2px var(--warn);    }
+
+    /* EVENT CARD */
+    .ecard { flex:1; margin-left:10px; background:var(--card); border:1.5px solid var(--border); border-radius:16px; padding:12px 14px; box-shadow:0 2px 12px rgba(42,33,22,.05); cursor:pointer; transition:transform .15s; }
+    .ecard:active { transform:scale(.98); }
+    .ecard-hdr { display:flex; justify-content:space-between; align-items:flex-start; }
+    .ecard-left { flex:1; min-width:0; }
+    .ecard-ttl  { font-size:14px; font-weight:600; color:var(--dark); margin-bottom:2px; }
+    .ecard-sub  { font-size:10px; color:var(--muted); line-height:1.4; }
+    .ecard-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; margin-left:8px; }
+    .tag { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; padding:3px 8px; border-radius:20px; }
+    .tg  { background:#FDF0CC; color:var(--gold);   }
+    .tgr { background:var(--green-lt); color:var(--green);  }
+    .tb  { background:var(--blue-lt);  color:var(--blue);   }
+    .tp  { background:var(--purp-lt);  color:var(--purple); }
+    .ts  { background:#ECEAE5; color:var(--mid);    }
+    .tw  { background:var(--warn-lt); color:var(--warn);   }
+    .arr-btn { font-size:10px; color:var(--muted); transition:transform .2s; }
+    .arr-btn.open { transform:rotate(180deg); }
+    .exp { display:none; }
+    .exp.open { display:block; }
+    .divider { height:1px; background:var(--border); margin:9px 0; }
+    .drow { display:flex; align-items:flex-start; gap:7px; margin-bottom:5px; }
+    .drow:last-child { margin-bottom:0; }
+    .dico { font-size:12px; flex-shrink:0; margin-top:1px; }
+    .dtxt { font-size:11px; color:var(--mid); line-height:1.5; }
+    .cancel-note { margin-top:9px; padding:8px 10px; background:var(--warn-lt); border-left:3px solid #E0A060; border-radius:0 8px 8px 0; font-size:10px; color:#7A4500; line-height:1.5; }
+    .cfm { display:inline-flex; align-items:center; gap:4px; font-size:10px; color:var(--green); font-weight:500; margin-top:7px; }
+    .lineup { display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+    .lp { padding:4px 10px; background:var(--purp-lt); border-radius:20px; font-size:10px; color:var(--purple); font-weight:500; }
+
+    /* FLIGHTS PANEL */
+    .fl-card { background:var(--card); border:1.5px solid var(--border); border-radius:16px; margin-bottom:12px; overflow:hidden; }
+    .fl-head { padding:14px 14px; cursor:pointer; display:flex; align-items:center; gap:10px; }
+    .fl-num  { width:28px; height:28px; border-radius:50%; background:var(--dark); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .fl-info { flex:1; min-width:0; }
+    .fl-route { font-size:15px; font-weight:700; color:var(--dark); line-height:1.2; }
+    .fl-sub   { font-size:12px; color:var(--muted); margin-top:3px; }
+    .fl-times { text-align:right; flex-shrink:0; }
+    .fl-t     { font-size:15px; font-weight:700; color:var(--dark); }
+    .fl-date  { font-size:11px; color:var(--muted); margin-top:3px; }
+    .fl-body  { display:none; border-top:1px solid var(--border); padding:12px 14px; }
+    .fl-body.open { display:block; }
+    .fl-row   { display:flex; justify-content:space-between; align-items:flex-start; padding:6px 0; border-bottom:1px solid var(--border); }
+    .fl-row:last-child { border-bottom:none; }
+    .fl-lbl   { font-size:11px; color:var(--muted); flex-shrink:0; margin-right:8px; }
+    .fl-val   { font-size:11px; font-weight:500; color:var(--dark); text-align:right; }
+    .fl-warn  { margin-top:9px; padding:8px 10px; background:var(--warn-lt); border-left:3px solid #E0A060; border-radius:0 8px 8px 0; font-size:10px; color:#7A4500; line-height:1.5; }
+    .fl-seg-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--purple); margin:10px 0 5px; }
+    .bag-note { margin-top:10px; background:var(--blue-lt); border-radius:10px; padding:10px 12px; font-size:11px; color:var(--blue); line-height:1.6; }
+    .bag-note strong { font-weight:600; }
+
+    /* STAYS PANEL */
+    .stay-list-item { background:var(--card); border:1.5px solid var(--border); border-radius:16px; padding:14px; margin-bottom:12px; }
+    .sli-hdr { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .sli-ico { font-size:24px; }
+    .sli-title { font-size:15px; font-weight:600; color:var(--dark); }
+    .sli-dates { font-size:13px; color:var(--mid); margin-top:2px; font-weight:500; }
+    .sli-row   { display:flex; justify-content:space-between; align-items:flex-start; padding:6px 0; border-bottom:1px solid var(--border); }
+    .sli-row:last-child { border-bottom:none; padding-bottom:0; }
+    .sli-lbl   { font-size:11px; color:var(--muted); flex-shrink:0; margin-right:10px; }
+    .sli-val   { font-size:11px; color:var(--dark); font-weight:500; text-align:right; }
+
+    /* INFO PANEL */
+    .ic { background:var(--card); border:1.5px solid var(--border); border-radius:16px; padding:16px; margin-bottom:12px; }
+    .ic h3 { font-family:'Playfair Display',serif; font-size:17px; color:var(--dark); margin-bottom:11px; }
+    .irow { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); }
+    .irow:last-child { border-bottom:none; }
+    .irow .lbl { font-size:12px; color:var(--muted); }
+    .irow .val { font-size:12px; font-weight:600; color:var(--dark); text-align:right; }
+
+    /* NOTES */
+    .cl-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+    .cl-item:last-child { border-bottom:none; }
+    .chk { width:20px; height:20px; border-radius:50%; border:2px solid var(--border); flex-shrink:0; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; background:transparent; }
+    .chk.on { background:var(--green); border-color:var(--green); }
+    .cl-txt { font-size:13px; color:var(--dark); }
+    .cl-txt.done { text-decoration:line-through; color:var(--muted); }
+    .notes-ta { width:100%; background:var(--card); border:1.5px solid var(--border); border-radius:14px; padding:14px; font-family:'Inter',sans-serif; font-size:13px; color:var(--dark); min-height:180px; resize:none; outline:none; }
+    .notes-ta:focus { border-color:var(--gold); }
+    .sec-lbl { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:10px; }
+
+    /* MAP LINKS */
+    a.a-link { color:var(--blue); text-decoration:underline; text-decoration-color:rgba(42,95,142,.35); text-underline-offset:2px; cursor:pointer; }
+
+    /* ADD ACTIVITY BUTTON */
+    .add-btn { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; margin-top:4px; padding:12px; background:transparent; border:1.5px dashed var(--border); border-radius:14px; font-size:13px; font-weight:500; color:var(--muted); cursor:pointer; transition:all .2s; }
+    .add-btn:active { background:var(--card); }
+    .add-btn .add-ico { width:22px; height:22px; border-radius:50%; background:var(--gold); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:400; }
+
+    /* DELETE BUTTON on custom events */
+    .del-x { font-size:14px; color:var(--muted); cursor:pointer; padding:2px 4px; border-radius:4px; transition:color .15s; margin-left:2px; }
+    .del-x:active { color:var(--red, #943030); }
+
+    /* MODAL */
+    .modal-overlay { position:fixed; inset:0; background:rgba(42,33,22,.45); z-index:200; }
+    .modal-sheet { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:430px; background:var(--card); border-radius:20px 20px 0 0; padding:16px 20px 36px; z-index:201; transition:transform .3s cubic-bezier(.32,1,.28,1); box-shadow:0 -8px 40px rgba(42,33,22,.18); }
+    .modal-sheet.open { transform:translateX(-50%) translateY(0); }
+    .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border); margin:0 auto 18px; }
+    .modal-title { font-family:'Playfair Display',serif; font-size:19px; color:var(--dark); margin-bottom:16px; }
+    .form-group { margin-bottom:14px; }
+    .form-group label { display:block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:5px; }
+    .form-input, .form-select, .form-textarea { width:100%; background:var(--bg); border:1.5px solid var(--border); border-radius:10px; padding:10px 12px; font-family:'Inter',sans-serif; font-size:14px; color:var(--dark); outline:none; -webkit-appearance:none; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--gold); }
+    .form-textarea { min-height:80px; resize:none; }
+    .modal-btn-row { display:flex; gap:10px; margin-top:18px; }
+    .modal-btn { flex:1; padding:13px; border-radius:12px; font-family:'Inter',sans-serif; font-size:14px; font-weight:600; cursor:pointer; border:none; }
+    .modal-btn.cancel { background:var(--bg); color:var(--mid); }
+    .modal-btn.save   { background:var(--dark); color:#fff; }
+
+    /* BOTTOM NAV — 5 tabs */
+    .bnav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background:var(--card); border-top:1px solid var(--border); padding:5px 0 16px; display:flex; justify-content:space-around; z-index:100; box-shadow:0 -4px 20px rgba(42,33,22,.09); }
+    .ni { display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; padding:2px 8px; }
+    .ni-ico { width:38px; height:38px; border-radius:50%; background:transparent; display:flex; align-items:center; justify-content:center; font-size:17px; transition:background .2s; }
+    .ni.on .ni-ico { background:var(--dark); }
+    .ni-lbl { font-size:9px; font-weight:500; color:var(--muted); letter-spacing:.2px; }
+    .ni.on .ni-lbl { color:var(--dark); font-weight:600; }
+  </style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-label">Bon Voyage · Europe</div>
+  <h1 class="hdr-title">Chelsea's <em>Journey</em></h1>
+  <div class="hdr-sub">1 Jul – 23 Jul 2026 · 23 days</div>
+  <div class="hdr-gear">⚙️</div>
+</div>
+
+<div class="strip-wrap"><div class="strip" id="strip"></div></div>
+
+<div class="prog-row">
+  <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+  <span class="prog-text" id="progTxt">Day 1 / 23</span>
+</div>
+
+<!-- ITINERARY -->
+<div class="panel on" id="panel-itin">
+  <div class="loc-banner">
+    <span id="locFlag">🇭🇰</span>
+    <span><span class="city" id="locCity">Hong Kong</span><span id="locCntry"></span></span>
+    <span class="arr">›</span>
+  </div>
+  <div class="stay-card" id="stayCard"></div>
+  <div class="alert" id="alertBox" style="display:none">
+    <span class="alert-ico" id="alertIco">🚨</span>
+    <div>
+      <div class="alert-ttl" id="alertTtl"></div>
+      <div class="alert-txt" id="alertTxt"></div>
+    </div>
+  </div>
+  <div class="sec-hdr"><h2>📅 Today's Schedule</h2></div>
+  <div class="tl" id="tl"></div>
+</div>
+
+<!-- FLIGHTS -->
+<div class="panel" id="panel-flights">
+  <div class="sec-hdr"><h2>✈️ All Flights</h2></div>
+  <div id="flightsList"></div>
+  <div class="ic" style="margin-top:4px">
+    <h3>🧳 Baggage Summary</h3>
+    <div class="irow"><span class="lbl">Cathay Pacific</span><span class="val">7kg cabin · 23kg checked</span></div>
+    <div class="irow"><span class="lbl">easyJet (×2)</span><span class="val">No cabin bag free · 23kg</span></div>
+    <div class="irow"><span class="lbl">Transavia</span><span class="val">No cabin bag free · 25kg</span></div>
+    <div class="irow"><span class="lbl">Wizz IBZ–BEG</span><span class="val">No cabin bag free · 26kg</span></div>
+    <div class="irow"><span class="lbl">Wizz BEG–FCO</span><span class="val" style="color:var(--warn)">⚠️ No cabin · 20kg only</span></div>
+    <div class="bag-note">⚠️ <strong>Lowest allowance: 20kg on 20 Jul (BEG→FCO).</strong> Pack to fit this limit throughout the trip. Purchase cabin bags for easyJet, Transavia & Wizz flights before each departure deadline.</div>
+  </div>
+  <div class="ic">
+    <h3>🚨 Cabin Bag Deadlines</h3>
+    <div class="irow"><span class="lbl">easyJet LGW→NCE</span><span class="val" style="color:var(--warn)">Buy before 8 Jul</span></div>
+    <div class="irow"><span class="lbl">easyJet NCE→ORY</span><span class="val" style="color:var(--warn)">Buy before 12 Jul</span></div>
+    <div class="irow"><span class="lbl">Transavia ORY→IBZ</span><span class="val" style="color:var(--warn)">Buy before 13 Jul</span></div>
+    <div class="irow"><span class="lbl">Wizz IBZ→BEG (both)</span><span class="val" style="color:var(--warn)">Buy before 16 Jul</span></div>
+    <div class="irow"><span class="lbl">Wizz BEG→FCO</span><span class="val" style="color:var(--warn)">Buy before 19 Jul</span></div>
+  </div>
+</div>
+
+<!-- STAYS -->
+<div class="panel" id="panel-stays">
+  <div class="sec-hdr"><h2>🏨 All Accommodations</h2></div>
+  <div id="staysList"></div>
+</div>
+
+<!-- INFO -->
+<div class="panel" id="panel-info">
+  <div class="ic">
+    <h3>Trip Overview</h3>
+    <div class="irow"><span class="lbl">Traveller</span><span class="val">Chelsea (Ka Long) Fung</span></div>
+    <div class="irow"><span class="lbl">Dates</span><span class="val">1 – 23 Jul 2026</span></div>
+    <div class="irow"><span class="lbl">Duration</span><span class="val">23 days</span></div>
+    <div class="irow"><span class="lbl">Countries</span><span class="val">🇭🇰 🇬🇧 🇫🇷 🇪🇸 🇷🇸 🇮🇹</span></div>
+    <div class="irow"><span class="lbl">Flights</span><span class="val">7 bookings · 8 legs</span></div>
+    <div class="irow"><span class="lbl">Dining bookings</span><span class="val">4 restaurants</span></div>
+    <div class="irow"><span class="lbl">Events</span><span class="val">ANYMA — Ibiza</span></div>
+  </div>
+  <div class="ic">
+    <h3>Route</h3>
+    <div class="irow"><span class="lbl">🇭🇰 Hong Kong</span><span class="val">Depart 1 Jul</span></div>
+    <div class="irow"><span class="lbl">🇬🇧 London</span><span class="val">2–9 Jul · 7 nights</span></div>
+    <div class="irow"><span class="lbl">🇫🇷 Nice / Antibes</span><span class="val">9–13 Jul · 4 nights</span></div>
+    <div class="irow"><span class="lbl">🇫🇷 Paris</span><span class="val">13–14 Jul · 1 night</span></div>
+    <div class="irow"><span class="lbl">🇪🇸 Ibiza</span><span class="val">14–17 Jul · 3 nights</span></div>
+    <div class="irow"><span class="lbl">🇷🇸 Belgrade</span><span class="val">17–20 Jul · 3 nights</span></div>
+    <div class="irow"><span class="lbl">🇮🇹 Rome</span><span class="val">20–23 Jul · 3 nights</span></div>
+    <div class="irow"><span class="lbl">🇭🇰 Hong Kong</span><span class="val">Arrive 24 Jul</span></div>
+  </div>
+  <div class="ic">
+    <h3>Key Reminders</h3>
+    <div class="irow"><span class="lbl">⚠️ BABA cancel deadline</span><span class="val" style="color:var(--warn)">9 Jul 11:59 PM</span></div>
+    <div class="irow"><span class="lbl">💳 Le Plongeoir</span><span class="val">CC hold required</span></div>
+    <div class="irow"><span class="lbl">✅ Les Ombres</span><span class="val">Confirmed (OpenTable)</span></div>
+    <div class="irow"><span class="lbl">🎧 ANYMA · Ibiza</span><span class="val">€90 Standard ticket</span></div>
+    <div class="irow"><span class="lbl">⚠️ Self-transfer Rome</span><span class="val" style="color:var(--warn)">17 Jul — collect & re-check</span></div>
+    <div class="irow"><span class="lbl">⚠️ 20kg limit</span><span class="val" style="color:var(--warn)">20 Jul BEG→FCO (Wizz)</span></div>
+    <div class="irow"><span class="lbl">📋 Cathay booking ref</span><span class="val">EXZH9C</span></div>
+  </div>
+</div>
+
+<!-- NOTES -->
+<div class="panel" id="panel-notes">
+  <div class="ic"><h3>Packing Checklist</h3><div id="chklist"></div></div>
+  <div style="margin-top:4px;margin-bottom:10px;">
+    <div class="sec-lbl">Notes</div>
+    <textarea class="notes-ta" placeholder="Jot down anything for the trip…"></textarea>
+  </div>
+</div>
+
+<!-- ADD ACTIVITY MODAL -->
+<div class="modal-overlay" id="modalOverlay" style="display:none" onclick="closeModal()"></div>
+<div class="modal-sheet" id="modalSheet">
+  <div class="modal-handle"></div>
+  <div class="modal-title">Add Activity</div>
+  <div class="form-group">
+    <label>Time (e.g. 14:30)</label>
+    <input type="text" class="form-input" id="inputTime" placeholder="14:30 — or leave blank">
+  </div>
+  <div class="form-group">
+    <label>Activity *</label>
+    <input type="text" class="form-input" id="inputTitle" placeholder="e.g. Lunch at Café de Flore">
+  </div>
+  <div class="form-group">
+    <label>Type</label>
+    <select class="form-select" id="inputType">
+      <option value="free">🎯 Activity / Sightseeing</option>
+      <option value="restaurant">🍽️ Restaurant / Dining</option>
+      <option value="event">🎭 Event / Show</option>
+      <option value="travel">🚌 Transport / Travel</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Address (optional)</label>
+    <input type="text" class="form-input" id="inputAddr" placeholder="Opens in Google Maps">
+  </div>
+  <div class="form-group">
+    <label>Notes (optional)</label>
+    <textarea class="form-textarea" id="inputNotes" placeholder="Booking ref, tips, anything…"></textarea>
+  </div>
+  <div class="modal-btn-row">
+    <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+    <button class="modal-btn save" onclick="saveActivity()">Add to Itinerary</button>
+  </div>
+</div>
+
+<div class="bnav">
+  <div class="ni on"  onclick="switchPanel('itin',this)">   <div class="ni-ico">📅</div><span class="ni-lbl">Itinerary</span></div>
+  <div class="ni"     onclick="switchPanel('flights',this)"> <div class="ni-ico">✈️</div><span class="ni-lbl">Flights</span></div>
+  <div class="ni"     onclick="switchPanel('stays',this)">   <div class="ni-ico">🏨</div><span class="ni-lbl">Stays</span></div>
+  <div class="ni"     onclick="switchPanel('info',this)">    <div class="ni-ico">🗺️</div><span class="ni-lbl">Info</span></div>
+  <div class="ni"     onclick="switchPanel('notes',this)">   <div class="ni-ico">📝</div><span class="ni-lbl">Notes</span></div>
+</div>
+
+<script>
+/* ══ STAYS DATA ══════════════════════════════ */
+const stays = [
+  { icon:'🏠',flag:'🇬🇧',title:"Sister's Place",city:'London, United Kingdom',dates:'2–9 Jul',nights:7,type:'Private',guests:'Sister',address:'London, UK',checkIn:'Morning, 2 July (no constraint)',checkOut:'9 July — LGW flight',notes:'No check-in/out time constraints' },
+  { icon:'🏡',flag:'🇫🇷',title:'Cagnes-sur-Mer Airbnb',city:'Cagnes-sur-Mer, France',dates:'9–11 Jul',nights:2,type:'Airbnb',guests:'You + Tanya',host:'Giorgia',address:'1 Rue Jules Ladoumegue, Cagnes-sur-Mer',checkIn:'Thu 9 Jul from 16:00 (flight lands 16:35 → ~17:30)',checkOut:'Sat 11 Jul by 10:00',notes:'Large private terrace · ~15 min to Nice · ~10 min to Nice Airport' },
+  { icon:'🏨',flag:'🇫🇷',title:'Hotel Nice (TBC)',city:'Nice, France',dates:'11–13 Jul',nights:2,type:'Hotel',guests:'Solo',address:'Nice, France',checkIn:'Sat 11 Jul (after 10:00 Airbnb checkout)',checkOut:'Mon 13 Jul morning',notes:'Hotel name TBC — add when confirmed' },
+  { icon:'🏨',flag:'🇫🇷',title:'Grand Pigalle Hotel',city:'South Pigalle, Paris 9th',dates:'13–14 Jul',nights:1,type:'Hotel',guests:'You + Anjay',address:'South Pigalle, 9th arrondissement',room:'SOPI Standard Room with Balcony',checkIn:'Mon 13 Jul afternoon (after 17:25 flight)',checkOut:'Tue 14 Jul — before 17:35 Ibiza flight',notes:'Near Montmartre · Great cafés & wine bars · Central metro' },
+  { icon:'🏨',flag:'🇪🇸',title:'Ibiza Playa Hotel',city:'Figueretas, Ibiza',dates:'14–17 Jul',nights:3,type:'Hotel',guests:'You + Anjay + Alison',address:'Figueretas — beachfront, Ibiza',checkIn:'Tue 14 Jul evening (flight arrives 19:40)',checkOut:'Fri 17 Jul early — 08:00 flight',notes:'Beachfront · Walking distance to Ibiza Town' },
+  { icon:'🏠',flag:'🇷🇸',title:"Bojan's Apartment",city:'Belgrade, Serbia',dates:'17–20 Jul',nights:3,type:'Private',guests:'You + Anjay + Alison',host:'Bojan',address:'Dositejeva 1a, Belgrade (Dorćol)',checkIn:'Fri 17 Jul from 15:00 (flight lands 15:20 → ~16:00)',checkOut:'Mon 20 Jul by 11:00',notes:'Dorćol / Old Town · Walk to Republic Square · Near Kalemegdan · Booked by Tanya' },
+  { icon:'🏠',flag:'🇮🇹',title:"Alessandro's Apartment",city:'Rome, Italy',dates:'20–23 Jul',nights:3,type:'Private',guests:'You + Alison',host:'Alessandro',address:'Via di San Giovanni in Laterano 130, Rome',checkIn:'Mon 20 Jul from 14:00',checkOut:'Thu 23 Jul by 09:00–09:30 (13:00 flight)',notes:'5–8 min walk to Colosseum · Roman Forum · Metro Line B' },
+];
+
+/* ══ FLIGHTS DATA ════════════════════════════ */
+const flights = [
+  { n:1,date:'Wed 1 Jul',fn:'CX255',airline:'Cathay Pacific',
+    from:'HKG',fromName:'Hong Kong',fromTerm:'T1',fromTime:'23:15',fromTZ:'HKT',
+    to:'LHR',toName:'London Heathrow',toTerm:'T3',toTime:'06:20 +1',toTZ:'BST',
+    dur:'14h 5m',ac:'Boeing 777-300ER',cabin:'Economy Light (Class V)',
+    ref:'EXZH9C',bookNo:null,pin:null,pnr:null,
+    bag:'Cabin: 1 piece + 1 small item (7kg) · Checked: 1 × 23kg',warn:null },
+  { n:2,date:'Thu 9 Jul',fn:'U28423',airline:'easyJet',
+    from:'LGW',fromName:'London Gatwick',fromTerm:'North',fromTime:'13:30',fromTZ:'BST',
+    to:'NCE',toName:'Nice',toTerm:'T2',toTime:'16:35',toTZ:'CEST',
+    dur:'2h 5m',ac:'Airbus A319',cabin:null,ref:null,
+    bookNo:'1658112492491698',pin:'2643',pnr:'KCMM8M9',
+    bag:'Personal item only (45×36×20 cm) · Checked: 1 × 23kg',
+    warn:'No free cabin bag — purchase separately before 8 Jul if needed' },
+  { n:3,date:'Mon 13 Jul',fn:'U24862',airline:'easyJet',
+    from:'NCE',fromName:'Nice',fromTerm:'T2',fromTime:'15:55',fromTZ:'CEST',
+    to:'ORY',toName:'Paris Orly',toTerm:'T1',toTime:'17:25',toTZ:'CEST',
+    dur:'1h 30m',ac:'Airbus A320',cabin:null,ref:null,
+    bookNo:'165811350843570',pin:'8367',pnr:'KCRM23L',
+    bag:'Personal item included · Checked: 1 × 23kg',
+    warn:'No free cabin bag — purchase before 12 Jul if needed' },
+  { n:4,date:'Tue 14 Jul',fn:'TO4768',airline:'Transavia',
+    from:'ORY',fromName:'Paris Orly',fromTerm:'T3',fromTime:'17:35',fromTZ:'CEST',
+    to:'IBZ',toName:'Ibiza',toTerm:null,toTime:'19:40',toTZ:'CEST',
+    dur:'2h 5m',ac:'Boeing 737-800',cabin:null,ref:null,
+    bookNo:'1658112326950066',pin:'5926',pnr:'MHE9PN',
+    bag:'Personal item (40×30×20 cm, 10kg) · Checked: 1 × 25kg',
+    warn:'No free cabin bag — purchase before 13 Jul if needed' },
+  { n:'5A',date:'Fri 17 Jul (Seg A)',fn:'W46236',airline:'Wizz Air Malta',
+    from:'IBZ',fromName:'Ibiza',fromTerm:null,fromTime:'08:00',fromTZ:'CEST',
+    to:'FCO',toName:'Rome Fiumicino',toTerm:null,toTime:'09:55',toTZ:'CEST',
+    dur:'1h 55m',ac:null,cabin:null,ref:null,
+    bookNo:'1658112327143282',pin:'9227',pnr:'YHDFWB',
+    bag:'Personal item (10kg) · Checked: 1 × 26kg',
+    warn:'⚠️ SELF-TRANSFER: Collect bags on arrival at FCO, re-check at T3 for W64032 (departs 13:40). 3h 45m window — NOT a protected connection.',
+    transfer:true },
+  { n:'5B',date:'Fri 17 Jul (Seg B)',fn:'W64032',airline:'Wizz Air',
+    from:'FCO',fromName:'Rome Fiumicino',fromTerm:'T3',fromTime:'13:40',fromTZ:'CEST',
+    to:'BEG',toName:'Belgrade',toTerm:'T2',toTime:'15:20',toTZ:'CEST',
+    dur:'1h 40m',ac:null,cabin:null,ref:null,
+    bookNo:'1658112327143282',pin:'9227',pnr:'TNLTJJ',
+    bag:'Personal item (10kg) · Checked: 1 × 26kg',warn:null },
+  { n:6,date:'Mon 20 Jul',fn:'W64031',airline:'Wizz Air',
+    from:'BEG',fromName:'Belgrade',fromTerm:'T1',fromTime:'11:20',fromTZ:'CEST',
+    to:'FCO',toName:'Rome Fiumicino',toTerm:null,toTime:'13:00',toTZ:'CEST',
+    dur:'1h 40m',ac:'Airbus A321neo',cabin:null,ref:null,
+    bookNo:'1658112327014322',pin:'9286',pnr:'XG3F5B',
+    bag:'No free cabin bag · Checked: 1 × 20kg',
+    warn:'⚠️ Only 20kg checked — lightest allowance of the trip. Pack within this limit from the start.' },
+  { n:7,date:'Thu 23 Jul',fn:'CX292',airline:'Cathay Pacific',
+    from:'FCO',fromName:'Rome Fiumicino',fromTerm:'T3',fromTime:'13:00',fromTZ:'CEST',
+    to:'HKG',toName:'Hong Kong',toTerm:'T1',toTime:'06:00 +1',toTZ:'HKT',
+    dur:'11h',ac:'Airbus A350-900',cabin:'Economy Light (Class M)',
+    ref:'EXZH9C',bookNo:null,pin:null,pnr:null,
+    bag:'Cabin: 1 piece + 1 small item (7kg) · Checked: 1 × 23kg',warn:null },
+];
+
+/* ══ DAYS DATA ═══════════════════════════════ */
+const days = [
+  // Day 1 — Jul 1 Depart HKG
+  { wday:'WED',date:1,mon:'Jul',dnum:1, city:'Hong Kong',country:'Depart',flag:'🇭🇰',
+    alert:null,
+    stay:{icon:'✈️',name:'Cathay Pacific CX255',addr:'HKG → LHR · 14h 5m',guests:'Solo traveller',checkIn:false,ciTime:null,checkOut:false,coTime:null},
+    events:[
+      {time:'23:15',endTime:null,title:'Flight CX255 — HKG → LHR',type:'flight',tag:'Flight',tgc:'tb',
+       sub:'Cathay Pacific · Economy · 14h 5m',
+       details:[{i:'🛫',t:'Depart Hong Kong HKG T1 at 23:15 HKT'},{i:'🛬',t:'Arrive London Heathrow LHR T3 at 06:20 BST (+1 day)'},{i:'✈️',t:'Boeing 777-300ER · Economy Light (Class V)'},{i:'📋',t:'Booking Ref: EXZH9C'},{i:'🧳',t:'Cabin: 1 piece + 1 small item (7kg) · Checked: 1 × 23kg'}],
+       cancel:null,confirmed:false,lineup:null}
+    ]
+  },
+  // Day 2 — Jul 2 Arrive London
+  { wday:'THU',date:2,mon:'Jul',dnum:2, city:'London',country:'United Kingdom',flag:'🇬🇧',
+    alert:null,
+    stay:{icon:'🏠',name:"Sister's Place",addr:'London, UK',guests:'Sister',checkIn:true,ciTime:'Morning',checkOut:false,coTime:null},
+    events:[
+      {time:'06:20',endTime:null,title:'Arrive London Heathrow',type:'checkin',tag:'Arrival',tgc:'tgr',
+       sub:'LHR T3 · CX255 from Hong Kong',
+       details:[{i:'🛬',t:'Arrive LHR Terminal 3 at 06:20 BST'},{i:'🚇',t:'Heathrow Express or Elizabeth Line to central London'},{i:'🏠',t:"Head to sister's — no check-in time constraint"}],
+       cancel:null,confirmed:false,lineup:null}
+    ]
+  },
+  // Days 3–8 — London free days
+  { wday:'FRI',date:3,mon:'Jul',dnum:3, city:'London',country:'UK',flag:'🇬🇧',alert:null,stay:{icon:'🏠',name:"Sister's Place",addr:'London',guests:'Sister',checkIn:false,ciTime:null,checkOut:false,coTime:null},events:[{time:null,endTime:null,title:'Free Day in London',type:'free',tag:'Free',tgc:'tgr',sub:'British Museum, Borough Market',details:[{i:'🏛️',t:'British Museum, Tate Modern, Borough Market'},{i:'🎭',t:'West End shows, Shoreditch, Greenwich'}],cancel:null,confirmed:false,lineup:null}] },
+  { wday:'SAT',date:4,mon:'Jul',dnum:4, city:'London',country:'UK',flag:'🇬🇧',alert:null,stay:{icon:'🏠',name:"Sister's Place",addr:'London',guests:'Sister',checkIn:false,ciTime:null,checkOut:false,coTime:null},events:[{time:null,endTime:null,title:'Free Day in London',type:'free',tag:'Free',tgc:'tgr',sub:'Hyde Park, Portobello Road',details:[{i:'🌿',t:'Hyde Park, Portobello Road market'},{i:'🏰',t:'Notting Hill, Carnaby Street'}],cancel:null,confirmed:false,lineup:null}] },
+  { wday:'SUN',date:5,mon:'Jul',dnum:5, city:'London',country:'UK',flag:'🇬🇧',alert:null,stay:{icon:'🏠',name:"Sister's Place",addr:'London',guests:'Sister',checkIn:false,ciTime:null,checkOut:false,coTime:null},events:[{time:null,endTime:null,title:'Free Day in London',type:'free',tag:'Free',tgc:'tgr',sub:'Tower of London & Thames',details:[{i:'🏰',t:'Tower of London, Tower Bridge'},{i:'⛵',t:'Thames riverside walk & pubs'}],cancel:null,confirmed:false,lineup:null}] },
+  { wday:'MON',date:6,mon:'Jul',dnum:6, city:'London',country:'UK',flag:'🇬🇧',alert:null,stay:{icon:'🏠',name:"Sister's Place",addr:'London',guests:'Sister',checkIn:false,ciTime:null,checkOut:false,coTime:null},events:[{time:null,endTime:null,title:'Free Day in London',type:'free',tag:'Free',tgc:'tgr',sub:'Museums & galleries',details:[{i:'🖼️',t:'National Gallery, V&A Museum'},{i:'🛍️',t:"King's Road, Oxford Street"}],cancel:null,confirmed:false,lineup:null}] },
+  { wday:'TUE',date:7,mon:'Jul',dnum:7, city:'London',country:'UK',flag:'🇬🇧',alert:null,stay:{icon:'🏠',name:"Sister's Place",addr:'London',guests:'Sister',checkIn:false,ciTime:null,checkOut:false,coTime:null},events:[{time:null,endTime:null,title:'Free Day in London',type:'free',tag:'Free',tgc:'tgr',sub:'Explore more of the city',details:[{i:'🌆',t:'Canary Wharf, Sky Garden'},{i:'🍽️',t:'Dinner in Soho or Mayfair'}],cancel:null,confirmed:false,lineup:null}] },
+  { wday:'WED',date:8,mon:'Jul',dnum:8, city:'London',country:'UK',flag:'🇬🇧',alert:null,stay:{icon:'🏠',name:"Sister's Place",addr:'London',guests:'Sister',checkIn:false,ciTime:null,checkOut:false,coTime:null},events:[{time:null,endTime:null,title:'Last Day in London',type:'free',tag:'Free',tgc:'tgr',sub:'Pack up · final evening',details:[{i:'🧳',t:'Pack for Nice tomorrow — LGW flight 13:30'},{i:'🌃',t:'Final dinner with sister'}],cancel:null,confirmed:false,lineup:null}] },
+  // Day 9 — Jul 9 LGW → NCE
+  { wday:'THU',date:9,mon:'Jul',dnum:9, city:'London → Nice',country:'UK / France',flag:'🇬🇧',
+    alert:null,
+    stay:{icon:'🏡',name:'Cagnes-sur-Mer Airbnb',addr:'1 Rue Jules Ladoumegue',guests:'You + Tanya',checkIn:true,ciTime:'16:00',checkOut:false,coTime:null},
+    events:[
+      {time:'13:30',endTime:'16:35',title:'Flight U28423 — LGW → NCE',type:'flight',tag:'Flight',tgc:'tb',
+       sub:'easyJet · Airbus A319 · 2h 5m',
+       details:[{i:'🛫',t:'Depart London Gatwick (LGW North) at 13:30 BST'},{i:'🛬',t:'Arrive Nice (NCE T2) at 16:35 CEST'},{i:'📋',t:'Booking No: 1658112492491698 · PIN: 2643 · PNR: KCMM8M9'},{i:'🧳',t:'Personal item only (45×36×20 cm) · Checked: 1 × 23kg'}],
+       cancel:null,confirmed:false,lineup:null},
+      {time:'~17:30',endTime:null,title:'Check-in: Cagnes Airbnb',type:'checkin',tag:'Check-in',tgc:'tgr',
+       sub:"Host: Giorgia · You + Tanya · 2 nights",
+       details:[{i:'📍',t:'1 Rue Jules Ladoumegue, Cagnes-sur-Mer'},{i:'🕓',t:'Check-in from 16:00 — flight lands 16:35, arrival ~17:30'},{i:'🌿',t:'Large private terrace · ~15 min to Nice centre'}],
+       cancel:null,confirmed:false,lineup:null}
+    ]
+  },
+  // Day 10 — Jul 10 Antibes
+  { wday:'FRI',date:10,mon:'Jul',dnum:10, city:'Antibes',country:'France',flag:'🇫🇷',
+    alert:null,
+    stay:{icon:'🏡',name:'Cagnes-sur-Mer Airbnb',addr:'1 Rue Jules Ladoumegue',guests:'You + Tanya',checkIn:false,ciTime:null,checkOut:false,coTime:null},
+    events:[
+      {time:'12:30',endTime:null,title:'BABA',type:'restaurant',tag:'Reservation',tgc:'tg',
+       sub:'Lunch · 2 guests',
+       details:[{i:'📍',t:'10 Boulevard Maréchal Juin, 06160 Antibes'},{i:'📞',t:'+33 4 92 93 71 55'},{i:'👤',t:'Booking name: Chelsea Fung'},{i:'👥',t:'2 guests'}],
+       cancel:'Free cancellation until <b>9 July 2026 at 11:59 PM</b>. After that, full credit card hold charged.',
+       confirmed:false,lineup:null}
+    ]
+  },
+  // Day 11 — Jul 11 Nice
+  { wday:'SAT',date:11,mon:'Jul',dnum:11, city:'Nice',country:'France',flag:'🇫🇷',
+    alert:null,
+    stay:{icon:'🏨',name:'Hotel Nice (TBC)',addr:'Nice, France',guests:'Solo',checkIn:true,ciTime:'After 10:00',checkOut:true,coTime:'10:00'},
+    events:[
+      {time:'10:00',endTime:null,title:'Check-out: Cagnes Airbnb',type:'checkout',tag:'Check-out',tgc:'ts',sub:'1 Rue Jules Ladoumegue',details:[{i:'🕙',t:'Check-out by 10:00'},{i:'🧳',t:'Head to hotel in Nice city centre'}],cancel:null,confirmed:false,lineup:null},
+      {time:'15:15',endTime:'16:45',title:'Le Plongeoir',type:'restaurant',tag:'Reservation',tgc:'tg',sub:'Restaurant · 3 guests · 1.5 hrs',details:[{i:'📍',t:'60 Boulevard Franck Pilatte, 06300 Nice'},{i:'👥',t:'3 guests'},{i:'💳',t:'Credit card hold required'}],cancel:null,confirmed:false,lineup:null},
+      {time:'~Evening',endTime:null,title:'Check-in: Hotel Nice',type:'checkin',tag:'Check-in',tgc:'tgr',sub:'Solo stay · Nice',details:[{i:'🏨',t:'Hotel name TBC — add when confirmed'},{i:'ℹ️',t:'Solo stay for 2 nights (11–13 Jul)'}],cancel:null,confirmed:false,lineup:null}
+    ]
+  },
+  // Day 12 — Jul 12 Nice free
+  { wday:'SUN',date:12,mon:'Jul',dnum:12, city:'Nice',country:'France',flag:'🇫🇷',
+    alert:null,
+    stay:{icon:'🏨',name:'Hotel Nice (TBC)',addr:'Nice, France',guests:'Solo',checkIn:false,ciTime:null,checkOut:false,coTime:null},
+    events:[{time:null,endTime:null,title:'Free Day in Nice',type:'free',tag:'Free',tgc:'tgr',sub:'Promenade des Anglais & more',details:[{i:'🌊',t:'Promenade des Anglais, Vieux-Nice Old Town'},{i:'🌺',t:'Cours Saleya flower market'},{i:'💡',t:'Buy cabin bag add-ons for upcoming easyJet/Transavia flights!'}],cancel:null,confirmed:false,lineup:null}]
+  },
+  // Day 13 — Jul 13 NCE → ORY
+  { wday:'MON',date:13,mon:'Jul',dnum:13, city:'Nice → Paris',country:'France',flag:'🇫🇷',
+    alert:null,
+    stay:{icon:'🏨',name:'Grand Pigalle Hotel',addr:'South Pigalle, Paris',guests:'You + Anjay',checkIn:true,ciTime:'~18:30',checkOut:true,coTime:'Morning'},
+    events:[
+      {time:'Morning',endTime:null,title:'Check-out: Hotel Nice',type:'checkout',tag:'Check-out',tgc:'ts',sub:'Nice hotel',details:[{i:'🧳',t:'Check out and make way to NCE T2'},{i:'💡',t:'Flight departs 15:55 — head to airport ~14:30'}],cancel:null,confirmed:false,lineup:null},
+      {time:'15:55',endTime:'17:25',title:'Flight U24862 — NCE → ORY',type:'flight',tag:'Flight',tgc:'tb',
+       sub:'easyJet · Airbus A320 · 1h 30m',
+       details:[{i:'🛫',t:'Depart Nice (NCE T2) at 15:55 CEST'},{i:'🛬',t:'Arrive Paris Orly (ORY T1) at 17:25 CEST'},{i:'📋',t:'Booking No: 165811350843570 · PIN: 8367 · PNR: KCRM23L'},{i:'🧳',t:'Personal item included · Checked: 1 × 23kg'}],
+       cancel:null,confirmed:false,lineup:null},
+      {time:'~18:30',endTime:null,title:'Check-in: Grand Pigalle Hotel',type:'checkin',tag:'Check-in',tgc:'tgr',
+       sub:'You + Anjay · South Pigalle, Paris',
+       details:[{i:'📍',t:'South Pigalle, 9th arrondissement, Paris'},{i:'🛏️',t:'SOPI Standard Room with Balcony'},{i:'🗺️',t:'Near Montmartre · Cafés & wine bars · Central metro'}],
+       cancel:null,confirmed:false,lineup:null}
+    ]
+  },
+  // Day 14 — Jul 14 BUSIEST
+  { wday:'TUE',date:14,mon:'Jul',dnum:14, city:'Paris → Ibiza',country:'France / Spain',flag:'🇫🇷',
+    alert:{ico:'🚨',title:'Busiest Day',text:'Lunch in Paris → Flight to Ibiza → ANYMA night. Leave Les Ombres by 15:30 for ORY T3.'},
+    stay:{icon:'🏨',name:'Ibiza Playa Hotel',addr:'Figueretas, Ibiza',guests:'You + Anjay + Alison',checkIn:true,ciTime:'~21:00',checkOut:true,coTime:'Morning'},
+    events:[
+      {time:'13:15',endTime:null,title:'Les Ombres',type:'restaurant',tag:'Confirmed ✅',tgc:'tgr',
+       sub:'Lunch · 3 guests · Rooftop terrace',
+       details:[{i:'📍',t:'Musée du Quai Branly, Near Eiffel Tower, Paris'},{i:'👥',t:'3 guests · OpenTable booking'},{i:'🌅',t:'Scenic rooftop with Eiffel Tower views'},{i:'⏰',t:'Leave by 15:30 to catch 17:35 flight'}],
+       cancel:null,confirmed:true,lineup:null},
+      {time:'17:35',endTime:'19:40',title:'Flight TO4768 — ORY → IBZ',type:'flight',tag:'Flight',tgc:'tb',
+       sub:'Transavia · Boeing 737-800 · 2h 5m',
+       details:[{i:'🛫',t:'Depart Paris Orly (ORY T3) at 17:35 CEST'},{i:'🛬',t:'Arrive Ibiza (IBZ) at 19:40 CEST'},{i:'📋',t:'Booking No: 1658112326950066 · PIN: 5926 · PNR: MHE9PN'},{i:'🧳',t:'Personal item (40×30×20 cm, 10kg) · Checked: 1 × 25kg'}],
+       cancel:null,confirmed:false,lineup:null},
+      {time:'~21:00',endTime:null,title:'Check-in: Ibiza Playa Hotel',type:'checkin',tag:'Check-in',tgc:'tgr',
+       sub:'You + Anjay + Alison · 3 nights',
+       details:[{i:'📍',t:'Figueretas area — beachfront'},{i:'🚶',t:'Walking distance to Ibiza Town'}],
+       cancel:null,confirmed:false,lineup:null},
+      {time:'Night',endTime:null,title:'ANYMA',type:'event',tag:'Event',tgc:'tp',
+       sub:'Ibiza · Standard ticket · €90',
+       details:[{i:'🎧',t:'Main Room: ANYMA, RAMPA, COLYN, STYLO B2B Eli & Dani'},{i:'🎵',t:'Other rooms: Wild Comet · The Bunker (Artists TBA)'},{i:'🎫',t:'Standard ticket — €90'}],
+       cancel:null,confirmed:false,lineup:['ANYMA','RAMPA','COLYN','STYLO','Eli & Dani']}
+    ]
+  },
+  // Day 15 — Jul 15 Ibiza free
+  { wday:'WED',date:15,mon:'Jul',dnum:15, city:'Ibiza',country:'Spain',flag:'🇪🇸',alert:null,stay:{icon:'🏨',name:'Ibiza Playa Hotel',addr:'Figueretas, Ibiza',guests:'You + Anjay + Alison',checkIn:false,ciTime:null,checkOut:false,coTime:null},events:[{time:null,endTime:null,title:'Free Day in Ibiza',type:'free',tag:'Free',tgc:'tgr',sub:'Beach & Old Town',details:[{i:'🏖️',t:'Figueretas Beach right outside'},{i:'🏛️',t:'Dalt Vila (Old Town) & Ibiza Town'}],cancel:null,confirmed:false,lineup:null}] },
+  // Day 16 — Jul 16 Ibiza free
+  { wday:'THU',date:16,mon:'Jul',dnum:16, city:'Ibiza',country:'Spain',flag:'🇪🇸',alert:null,stay:{icon:'🏨',name:'Ibiza Playa Hotel',addr:'Figueretas, Ibiza',guests:'You + Anjay + Alison',checkIn:false,ciTime:null,checkOut:false,coTime:null},events:[{time:null,endTime:null,title:'Free Day in Ibiza',type:'free',tag:'Free',tgc:'tgr',sub:'Last full day — ⏰ early flight tomorrow!',details:[{i:'🌊',t:'Es Vedrà, Las Salinas beach, Es Canar'},{i:'⏰',t:'Early night — 08:00 flight tomorrow. Set multiple alarms!'}],cancel:null,confirmed:false,lineup:null}] },
+  // Day 17 — Jul 17 IBZ → FCO → BEG (self-transfer!)
+  { wday:'FRI',date:17,mon:'Jul',dnum:17, city:'Ibiza → Belgrade',country:'via Rome',flag:'🇪🇸',
+    alert:{ico:'⚠️',title:'Self-Transfer in Rome',text:'Collect bags at FCO on arrival (09:55). Re-check at T3 for W64032 departing 13:40. This is NOT a protected connection — allow time!'},
+    stay:{icon:'🏠',name:"Bojan's Apartment",addr:'Dositejeva 1a, Belgrade',guests:'You + Anjay + Alison',checkIn:true,ciTime:'15:00',checkOut:true,coTime:'Early flight'},
+    events:[
+      {time:'08:00',endTime:'09:55',title:'Flight W46236 — IBZ → FCO',type:'flight',tag:'Flight',tgc:'tb',
+       sub:'Wizz Air Malta · 1h 55m · Segment A',
+       details:[{i:'⏰',t:'Very early departure — set multiple alarms!'},{i:'🛫',t:'Depart Ibiza (IBZ) at 08:00 CEST'},{i:'🛬',t:'Arrive Rome Fiumicino (FCO) at 09:55 CEST'},{i:'📋',t:'Booking No: 1658112327143282 · PIN: 9227 · PNR: YHDFWB'},{i:'🧳',t:'Personal item (10kg) · Checked: 1 × 26kg'}],
+       cancel:null,confirmed:false,lineup:null},
+      {time:'09:55',endTime:'13:40',title:'⚠️ Self-Transfer — Rome FCO',type:'transfer',tag:'Transfer',tgc:'tw',
+       sub:'Collect bags · re-check at T3 · 3h 45m window',
+       details:[{i:'⚠️',t:'NOT a protected connection — you must collect your bags and re-check in'},{i:'🧳',t:'Collect checked bag from baggage reclaim'},{i:'🔄',t:'Re-check bag for W64032 at FCO T3'},{i:'⏱️',t:'3h 45m window: 09:55 arrive → 13:40 depart'}],
+       cancel:null,confirmed:false,lineup:null},
+      {time:'13:40',endTime:'15:20',title:'Flight W64032 — FCO → BEG',type:'flight',tag:'Flight',tgc:'tb',
+       sub:'Wizz Air · 1h 40m · Segment B',
+       details:[{i:'🛫',t:'Depart Rome Fiumicino (FCO T3) at 13:40 CEST'},{i:'🛬',t:'Arrive Belgrade (BEG T2) at 15:20 CEST'},{i:'📋',t:'Booking No: 1658112327143282 · PIN: 9227 · PNR: TNLTJJ'}],
+       cancel:null,confirmed:false,lineup:null},
+      {time:'~16:00',endTime:null,title:"Check-in: Bojan's Apartment",type:'checkin',tag:'Check-in',tgc:'tgr',
+       sub:"You + Anjay + Alison · Booked by Tanya",
+       details:[{i:'📍',t:'Dositejeva 1a, Belgrade (Dorćol / Old Town)'},{i:'🕒',t:'Check-in from 15:00 · Flight lands 15:20 → ~16:00–16:30'},{i:'🏛️',t:'Walk to Republic Square · Near Kalemegdan Fortress'}],
+       cancel:null,confirmed:false,lineup:null}
+    ]
+  },
+  // Days 18–19 — Belgrade free
+  { wday:'SAT',date:18,mon:'Jul',dnum:18, city:'Belgrade',country:'Serbia',flag:'🇷🇸',alert:null,stay:{icon:'🏠',name:"Bojan's Apartment",addr:'Dositejeva 1a',guests:'You + Anjay + Alison',checkIn:false,ciTime:null,checkOut:false,coTime:null},events:[{time:null,endTime:null,title:'Free Day in Belgrade',type:'free',tag:'Free',tgc:'tgr',sub:"Explore Serbia's capital",details:[{i:'🏰',t:'Kalemegdan Fortress & Belgrade Fortress'},{i:'🎭',t:'Skadarlija — the bohemian quarter'},{i:'🍷',t:'Kafana dining & vibrant nightlife'}],cancel:null,confirmed:false,lineup:null}] },
+  { wday:'SUN',date:19,mon:'Jul',dnum:19, city:'Belgrade',country:'Serbia',flag:'🇷🇸',alert:null,stay:{icon:'🏠',name:"Bojan's Apartment",addr:'Dositejeva 1a',guests:'You + Anjay + Alison',checkIn:false,ciTime:null,checkOut:false,coTime:null},events:[{time:null,endTime:null,title:'Free Day in Belgrade',type:'free',tag:'Free',tgc:'tgr',sub:'Last day — BEG→FCO tomorrow at 11:20',details:[{i:'⛵',t:'Ada Ciganlija lake & river beach'},{i:'💡',t:'Pack to 20kg for tomorrow\'s Wizz Air flight!'}],cancel:null,confirmed:false,lineup:null}] },
+  // Day 20 — Jul 20 BEG → FCO
+  { wday:'MON',date:20,mon:'Jul',dnum:20, city:'Belgrade → Rome',country:'Serbia / Italy',flag:'🇷🇸',
+    alert:null,
+    stay:{icon:'🏠',name:"Alessandro's Apartment",addr:'Via di San Giovanni 130, Rome',guests:'You + Alison',checkIn:true,ciTime:'14:00',checkOut:true,coTime:'11:00'},
+    events:[
+      {time:'11:00',endTime:null,title:'Check-out: Belgrade',type:'checkout',tag:'Check-out',tgc:'ts',sub:'Dositejeva 1a',details:[{i:'🕙',t:'Check-out by 11:00'},{i:'🧳',t:'Head to Belgrade Nikola Tesla Airport (BEG T1)'}],cancel:null,confirmed:false,lineup:null},
+      {time:'11:20',endTime:'13:00',title:'Flight W64031 — BEG → FCO',type:'flight',tag:'Flight',tgc:'tb',
+       sub:'Wizz Air · Airbus A321neo · 1h 40m',
+       details:[{i:'🛫',t:'Depart Belgrade (BEG T1) at 11:20 CEST'},{i:'🛬',t:'Arrive Rome Fiumicino (FCO) at 13:00 CEST'},{i:'📋',t:'Booking No: 1658112327014322 · PIN: 9286 · PNR: XG3F5B'},{i:'🧳',t:'⚠️ Only 20kg checked — pack carefully!'}],
+       cancel:null,confirmed:false,lineup:null},
+      {time:'~15:00',endTime:null,title:"Check-in: Alessandro's",type:'checkin',tag:'Check-in',tgc:'tgr',
+       sub:'You + Alison · 3 nights',
+       details:[{i:'📍',t:'Via di San Giovanni in Laterano 130, Rome'},{i:'🕒',t:'Check-in from 14:00'},{i:'🏛️',t:'5–8 min walk to Colosseum · Roman Forum · Metro Line B'}],
+       cancel:null,confirmed:false,lineup:null}
+    ]
+  },
+  // Days 21–22 — Rome free
+  { wday:'TUE',date:21,mon:'Jul',dnum:21, city:'Rome',country:'Italy',flag:'🇮🇹',alert:null,stay:{icon:'🏠',name:"Alessandro's Apartment",addr:'Via di San Giovanni 130',guests:'You + Alison',checkIn:false,ciTime:null,checkOut:false,coTime:null},events:[{time:null,endTime:null,title:'Free Day in Rome',type:'free',tag:'Free',tgc:'tgr',sub:'The Eternal City',details:[{i:'🏛️',t:'Colosseum & Roman Forum (5 min walk!)'},{i:'⛲',t:'Trevi Fountain, Pantheon, Piazza Navona'},{i:'🍕',t:'Trastevere for evening dinner'}],cancel:null,confirmed:false,lineup:null}] },
+  { wday:'WED',date:22,mon:'Jul',dnum:22, city:'Rome',country:'Italy',flag:'🇮🇹',alert:null,stay:{icon:'🏠',name:"Alessandro's Apartment",addr:'Via di San Giovanni 130',guests:'You + Alison',checkIn:false,ciTime:null,checkOut:false,coTime:null},events:[{time:null,endTime:null,title:'Free Day in Rome',type:'free',tag:'Free',tgc:'tgr',sub:'Last full day',details:[{i:'🕌',t:'Vatican City & Sistine Chapel (book ahead!)'},{i:'🌅',t:'Sunset from Gianicolo Hill'}],cancel:null,confirmed:false,lineup:null}] },
+  // Day 23 — Jul 23 Depart Rome
+  { wday:'THU',date:23,mon:'Jul',dnum:23, city:'Rome',country:'Italy',flag:'🇮🇹',
+    alert:null,
+    stay:{icon:'🏠',name:"Alessandro's Apartment",addr:'Via di San Giovanni 130',guests:'You + Alison',checkIn:false,ciTime:null,checkOut:true,coTime:'09:00–09:30'},
+    events:[
+      {time:'09:00',endTime:null,title:"Check-out: Alessandro's",type:'checkout',tag:'Check-out',tgc:'ts',sub:'Via di San Giovanni, Rome',details:[{i:'🕘',t:'Leave by 09:00–09:30 for 13:00 flight'},{i:'🧳',t:'Head to Rome Fiumicino (FCO T3)'}],cancel:null,confirmed:false,lineup:null},
+      {time:'13:00',endTime:null,title:'Flight CX292 — FCO → HKG',type:'flight',tag:'Flight',tgc:'tb',
+       sub:'Cathay Pacific · Airbus A350-900 · 11h',
+       details:[{i:'🛫',t:'Depart Rome Fiumicino (FCO T3) at 13:00 CEST'},{i:'🛬',t:'Arrive Hong Kong (HKG T1) at 06:00 HKT (+1 day)'},{i:'✈️',t:'Airbus A350-900 · Economy Light (Class M)'},{i:'📋',t:'Booking Ref: EXZH9C'},{i:'🧳',t:'Cabin: 1 piece + 1 small item (7kg) · Checked: 1 × 23kg'},{i:'🎉',t:'End of an amazing 22-night journey!'}],
+       cancel:null,confirmed:false,lineup:null}
+    ]
+  }
+];
+
+/* ══ STATE ═══════════════════════════════════ */
+let current = 0;
+
+/* ══ STRIP ═══════════════════════════════════ */
+function renderStrip() {
+  const el = document.getElementById('strip');
+  el.innerHTML = '';
+  days.forEach((d,i) => {
+    const c = document.createElement('div');
+    c.className = 'dc'+(i===current?' active':'')+(d.alert?' busy':'');
+    c.innerHTML = `<span class="dnum">D${d.dnum}</span><span class="wday">${d.wday}</span><span class="mdate">${d.date}</span><span class="mon">${d.mon}</span>`;
+    c.onclick = () => go(i);
+    el.appendChild(c);
+  });
+}
+
+/* ══ STAY CARD ════════════════════════════════ */
+function renderStayCard() {
+  const s = days[current].stay;
+  let badges = '';
+  if (s.checkOut) badges += `<span class="stay-badge sb-out">Check-out${s.coTime?' by '+s.coTime:''}</span>`;
+  if (s.checkIn)  badges += `<span class="stay-badge sb-in">Check-in${s.ciTime?' from '+s.ciTime:''}</span>`;
+  const addrLink = `<a class="a-link" href="https://maps.google.com/?q=${encodeURIComponent(s.addr)}" target="_blank">${s.addr}</a>`;
+  document.getElementById('stayCard').innerHTML = `
+    <span class="stay-ico">${s.icon}</span>
+    <div class="stay-body">
+      <div class="stay-name">${s.name}</div>
+      <div class="stay-sub">${addrLink} · ${s.guests}</div>
+      ${badges?'<div class="stay-badges">'+badges+'</div>':''}
+    </div>`;
+}
+
+/* ══ TIMELINE ════════════════════════════════ */
+function renderTL() {
+  const d = days[current];
+  document.getElementById('locFlag').textContent = d.flag;
+  document.getElementById('locCity').textContent = d.city;
+  document.getElementById('locCntry').textContent = d.country ? ', '+d.country : '';
+  document.getElementById('progFill').style.width = (d.dnum/days.length*100)+'%';
+  document.getElementById('progTxt').textContent = 'Day '+d.dnum+' / '+days.length;
+
+  const ab = document.getElementById('alertBox');
+  if (d.alert) {
+    ab.style.display = 'flex';
+    document.getElementById('alertIco').textContent = d.alert.ico;
+    document.getElementById('alertTtl').textContent = d.alert.title;
+    document.getElementById('alertTxt').textContent = d.alert.text;
+  } else { ab.style.display = 'none'; }
+
+  const tl = document.getElementById('tl');
+  tl.innerHTML = '';
+  const dotMap = {restaurant:'',travel:'travel',flight:'flight',event:'event',free:'free',checkin:'checkin',checkout:'checkout',transfer:'transfer'};
+  const tgcMap  = {restaurant:'tg',travel:'ts',flight:'tb',event:'tp',free:'tgr',checkin:'tgr',checkout:'ts',transfer:'tw'};
+
+  function parseTime(t) {
+    if (!t) return 9999;
+    const m = (t||'').match(/^~?(\d{1,2}):(\d{2})/);
+    return m ? parseInt(m[1])*60+parseInt(m[2]) : 9999;
+  }
+
+  // Merge built-in + custom, sort by time
+  const customs = (customActivities[current]||[]).map((c,i)=>({...c, _customIdx:i}));
+  const allEvents = [...d.events, ...customs].sort((a,b)=>parseTime(a.time)-parseTime(b.time));
+
+  allEvents.forEach(ev => {
+    const timeHtml = ev.time ? (ev.endTime ? `<span class="t">${ev.time}<small>–${ev.endTime}</small></span>` : `<span class="t">${ev.time}</span>`) : `<span class="t" style="font-size:9px;color:var(--muted)">—</span>`;
+    let det = (ev.details||[]).map(r => {
+      if (r.i === '📍') {
+        const q = encodeURIComponent(r.t);
+        return `<div class="drow"><span class="dico">${r.i}</span><a class="dtxt a-link" href="https://maps.google.com/?q=${q}" target="_blank">${r.t}</a></div>`;
+      }
+      return `<div class="drow"><span class="dico">${r.i}</span><span class="dtxt">${r.t}</span></div>`;
+    }).join('');
+    if (ev.cancel)    det += `<div class="cancel-note">⚠️ ${ev.cancel}</div>`;
+    if (ev.confirmed) det += `<div class="cfm">✅ Confirmed reservation</div>`;
+    if (ev.lineup)    det += `<div class="lineup">${ev.lineup.map(a=>`<span class="lp">${a}</span>`).join('')}</div>`;
+    if (ev.notes)     det += `<div class="drow"><span class="dico">📝</span><span class="dtxt">${ev.notes}</span></div>`;
+
+    const isCustom = ev._customIdx !== undefined;
+    const evTgc  = isCustom ? (tgcMap[ev.type]||'ts') : ev.tgc;
+    const evTag  = isCustom ? (ev.tag||'Custom') : ev.tag;
+    const delBtn = isCustom ? `<span class="del-x" onclick="deleteActivity(${current},${ev._customIdx},event)">✕</span>` : '';
+
+    const item = document.createElement('div');
+    item.className = 'tl-item';
+    item.innerHTML = `
+      <div class="tl-time">${timeHtml}</div>
+      <div class="tl-dot"><div class="dot ${dotMap[ev.type]||''}"></div></div>
+      <div class="ecard" onclick="toggle(this)">
+        <div class="ecard-hdr">
+          <div class="ecard-left"><div class="ecard-ttl">${ev.title}</div><div class="ecard-sub">${ev.sub||''}</div></div>
+          <div class="ecard-right"><span class="tag ${evTgc}">${evTag}</span>${delBtn}<span class="arr-btn">▾</span></div>
+        </div>
+        <div class="exp"><div class="divider"></div>${det||'<span class="dtxt" style="color:var(--muted)">No details added.</span>'}</div>
+      </div>`;
+    tl.appendChild(item);
+  });
+
+  // Add Activity button
+  const addBtn = document.createElement('div');
+  addBtn.className = 'add-btn';
+  addBtn.innerHTML = `<span class="add-ico">+</span> Add Activity`;
+  addBtn.onclick = () => openAddModal(current);
+  tl.appendChild(addBtn);
+}
+
+function toggle(card) {
+  card.querySelector('.exp').classList.toggle('open');
+  card.querySelector('.arr-btn').classList.toggle('open');
+}
+
+function go(i) {
+  current = i;
+  renderStrip();
+  renderStayCard();
+  renderTL();
+  const cards = document.getElementById('strip').querySelectorAll('.dc');
+  if (cards[i]) cards[i].scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+}
+
+/* ══ FLIGHTS LIST ════════════════════════════ */
+function renderFlights() {
+  const el = document.getElementById('flightsList');
+  flights.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'fl-card';
+    const rows = [
+      f.ac     ? ['Aircraft', f.ac]               : null,
+      f.cabin  ? ['Cabin',    f.cabin]             : null,
+      f.ref    ? ['Booking Ref', f.ref]            : null,
+      f.bookNo ? ['Booking No', f.bookNo]          : null,
+      f.pin    ? ['PIN', f.pin]                    : null,
+      f.pnr    ? ['PNR', f.pnr]                   : null,
+      ['Baggage', f.bag],
+    ].filter(Boolean);
+    const warnHtml = f.warn ? `<div class="fl-warn">⚠️ ${f.warn}</div>` : '';
+    const segLabel = String(f.n).includes('A') || String(f.n).includes('B') ? `<div class="fl-seg-lbl">Segment ${f.n.slice(-1)}</div>` : '';
+    div.innerHTML = `
+      <div class="fl-head" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div class="fl-num">${f.n}</div>
+        <div class="fl-info">
+          <div class="fl-route">${f.fromName} → ${f.toName}</div>
+          <div class="fl-sub">${f.airline} · ${f.fn} · ${f.dur} · ${f.date}</div>
+        </div>
+        <div class="fl-times">
+          <div class="fl-t">${f.fromTime} → ${f.toTime}</div>
+          <div class="fl-date">${f.from} → ${f.to}</div>
+        </div>
+      </div>
+      <div class="fl-body">
+        ${segLabel}
+        <div class="fl-row"><span class="fl-lbl">From</span><span class="fl-val">${f.fromName}${f.fromTerm?' ('+f.fromTerm+')':''} · ${f.fromTime} ${f.fromTZ}</span></div>
+        <div class="fl-row"><span class="fl-lbl">To</span><span class="fl-val">${f.toName}${f.toTerm?' ('+f.toTerm+')':''} · ${f.toTime} ${f.toTZ}</span></div>
+        ${rows.map(([l,v])=>`<div class="fl-row"><span class="fl-lbl">${l}</span><span class="fl-val">${v}</span></div>`).join('')}
+        ${warnHtml}
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+/* ══ STAYS LIST ══════════════════════════════ */
+function renderStaysList() {
+  const el = document.getElementById('staysList');
+  stays.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'stay-list-item';
+    const rows = [
+      s.host ? ['Host', s.host] : null,
+      s.room ? ['Room', s.room] : null,
+      ['Guests', s.guests],
+      ['Address', s.address],
+      ['Check-in', s.checkIn],
+      ['Check-out', s.checkOut],
+      s.notes ? ['Notes', s.notes] : null,
+    ].filter(Boolean);
+    div.innerHTML = `
+      <div class="sli-hdr">
+        <span style="font-size:18px">${s.flag}</span>
+        <span class="sli-ico">${s.icon}</span>
+        <div><div class="sli-title">${s.title}</div><div class="sli-dates">${s.city} · ${s.dates} · ${s.nights} night${s.nights>1?'s':''}</div></div>
+      </div>
+      ${rows.map(([l,v]) => {
+        if (l === 'Address') {
+          const q = encodeURIComponent(v);
+          const val = `${v} <a class="a-link" href="https://maps.google.com/?q=${q}" target="_blank" style="white-space:nowrap;font-size:10px;font-weight:600;margin-left:6px;">📍 Map</a>`;
+          return `<div class="sli-row"><span class="sli-lbl">${l}</span><span class="sli-val" style="display:flex;align-items:center;gap:2px;flex-wrap:wrap;justify-content:flex-end">${val}</span></div>`;
+        }
+        return `<div class="sli-row"><span class="sli-lbl">${l}</span><span class="sli-val">${v}</span></div>`;
+      }).join('')}`;
+    el.appendChild(div);
+  });
+}
+
+/* ══ PANEL SWITCH ════════════════════════════ */
+function switchPanel(name, el) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  document.getElementById('panel-'+name).classList.add('on');
+  el.classList.add('on');
+}
+
+/* ══ CHECKLIST ═══════════════════════════════ */
+const checks = [
+  'Passport & travel documents',
+  'BABA — cancel by 9 Jul 11:59 PM if needed',
+  'Le Plongeoir confirmation (11 Jul)',
+  'Les Ombres OpenTable confirmation (14 Jul)',
+  'ANYMA tickets — €90 (14 Jul)',
+  'Cabin bag: easyJet LGW→NCE — buy before 8 Jul',
+  'Cabin bag: easyJet NCE→ORY — buy before 12 Jul',
+  'Cabin bag: Transavia ORY→IBZ — buy before 13 Jul',
+  'Cabin bag: Wizz IBZ→BEG — buy before 16 Jul',
+  'Cabin bag: Wizz BEG→FCO — buy before 19 Jul',
+  'Pack to ≤20kg for 20 Jul Wizz Air flight',
+  'Credit card for CC holds (Le Plongeoir)',
+  'Travel insurance',
+  'Euro cash',
+  'EU plug adapter',
+  'Sunscreen ☀️ (Côte d\'Azur!)',
+  'Ibiza / ANYMA going-out outfit 🎉',
+  'Comfortable shoes (Rome cobblestones!)',
+];
+
+function renderChecklist() {
+  const c = document.getElementById('chklist');
+  checks.forEach((txt,i) => {
+    const row = document.createElement('div');
+    row.className = 'cl-item';
+    row.innerHTML = `<div class="chk" id="chk${i}" onclick="tickle(${i})"></div><span class="cl-txt" id="ct${i}">${txt}</span>`;
+    c.appendChild(row);
+  });
+}
+
+function tickle(i) {
+  const chk = document.getElementById('chk'+i), txt = document.getElementById('ct'+i);
+  chk.classList.toggle('on');
+  chk.innerHTML = chk.classList.contains('on') ? '✓' : '';
+  txt.classList.toggle('done');
+}
+
+/* ══ CUSTOM ACTIVITIES (localStorage) ══════════ */
+let customActivities = {};
+try { customActivities = JSON.parse(localStorage.getItem('chelsea_trip_activities') || '{}'); } catch(e) {}
+
+function saveToStorage() {
+  try { localStorage.setItem('chelsea_trip_activities', JSON.stringify(customActivities)); } catch(e) {}
+}
+
+/* ══ ADD MODAL ═══════════════════════════════ */
+let _addingToDayIdx = 0;
+
+function openAddModal(dayIdx) {
+  _addingToDayIdx = dayIdx;
+  document.getElementById('inputTime').value  = '';
+  document.getElementById('inputTitle').value = '';
+  document.getElementById('inputNotes').value = '';
+  document.getElementById('inputType').value  = 'free';
+  document.getElementById('inputAddr').value  = '';
+  document.getElementById('modalOverlay').style.display = 'block';
+  document.getElementById('modalSheet').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').style.display = 'none';
+  document.getElementById('modalSheet').classList.remove('open');
+}
+
+function saveActivity() {
+  const title = document.getElementById('inputTitle').value.trim();
+  if (!title) { document.getElementById('inputTitle').focus(); return; }
+  const type  = document.getElementById('inputType').value;
+  const time  = document.getElementById('inputTime').value.trim() || null;
+  const notes = document.getElementById('inputNotes').value.trim();
+  const addr  = document.getElementById('inputAddr').value.trim();
+  const tagMap = {restaurant:'Dining',free:'Activity',travel:'Travel',event:'Event'};
+  const activity = {
+    time, title,
+    sub: type === 'restaurant' ? 'Custom dining' : 'Custom activity',
+    type, tag: tagMap[type]||'Custom',
+    notes: notes || null,
+    details: addr ? [{i:'📍', t:addr}] : [],
+    cancel:null, confirmed:false, lineup:null
+  };
+  if (!customActivities[_addingToDayIdx]) customActivities[_addingToDayIdx] = [];
+  customActivities[_addingToDayIdx].push(activity);
+  saveToStorage();
+  closeModal();
+  renderTL();
+}
+
+function deleteActivity(dayIdx, actIdx, e) {
+  e.stopPropagation();
+  if (!customActivities[dayIdx]) return;
+  customActivities[dayIdx].splice(actIdx, 1);
+  saveToStorage();
+  renderTL();
+}
+
+/* ══ INIT ════════════════════════════════════ */
+renderStrip(); renderStayCard(); renderTL();
+renderFlights(); renderStaysList(); renderChecklist();
+</script>
+</body>
+</html>
